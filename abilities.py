@@ -18,7 +18,9 @@ class Rope(Ability):
         )
 
         self.rope_pivot = Entity()
-        self.rope = Entity(model = Mesh(vertices = [self.world_position, self.rope_pivot.world_position], mode = "line", thickness = 15, colors = [color.hex("#ff8b00")]), texture = "rope.png", enabled = False)
+        verts = [self.world_position, self.rope_pivot.world_position]
+        cols = [color.hex("#ff8b00")] * len(verts)
+        self.rope = Entity(model = Mesh(vertices = verts, mode = "line", thickness = 15, colors = cols), texture = "rope.png", enabled = False)
         self.rope_position = self.position
         self.can_rope = False
         self.rope_length = 200

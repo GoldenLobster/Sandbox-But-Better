@@ -1,0 +1,16 @@
+{
+    "forward": "w",
+    "left": "a",
+    "right": "d",
+    "back": "s",
+    "jump": "space",
+    "slide": "left shift",
+    "gun_1": "1",
+    "gun_2": "2",
+    "gun_3": "3",
+    "gun_4": "4",
+    "gun_5": "5",
+    "next_gun": "scroll up",
+    "prev_gun": "scroll down",
+    "reset": "g"
+}

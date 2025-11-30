@@ -1,7 +1,8 @@
 from ursina import *
 from ursina import curve
+from keybindings import keybindings
 
-colourH = color.rgba(18, 152, 255, 180)
+colourH = color.rgba(0, 0, 0, 0.3)
 colourN = color.rgba(0, 0, 0, 0.7)
 highlighted = lambda button: button.color == colourH
 
@@ -24,11 +25,13 @@ class MainMenu(Entity):
         self.end_screen = Entity(parent = self, enabled = False)
         self.pause_menu = Entity(parent = self, enabled = False)
         self.maps_menu = Entity(parent = self, enabled = False)
+        self.settings_menu = Entity(parent = self, enabled = False)
 
-        self.menus = [self.mainmenu, self.pause_menu, self.maps_menu]
+        self.menus = [self.mainmenu, self.pause_menu, self.maps_menu, self.settings_menu]
         self.index = 0
 
         self.enable_end_screen = True
+        self.waiting_for_key = False
 
         # Animate the Menus
         for menu in self.menus:
@@ -65,8 +68,9 @@ class MainMenu(Entity):
         camera.overlay.color = color.rgba(220, 0, 0, 100)
 
         # Pause Menu
-        self.resume_button = Button(text = "Resume", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = 0.05, parent = self.pause_menu)
-        self.retry_button = Button(text = "Retry", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = -0.07, parent = self.pause_menu)
+        self.resume_button = Button(text = "Resume", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = 0.17, parent = self.pause_menu)
+        self.retry_button = Button(text = "Retry", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = 0.05, parent = self.pause_menu)
+        self.settings_button = Button(text = "Settings", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = -0.07, parent = self.pause_menu)
         self.mainmenu_button = Button(text = "Main Menu", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = -0.19, parent = self.pause_menu)
         self.pause_overlay = Entity(parent = self.pause_menu, model = "quad", scale = 99, color = color.rgba(20, 20, 20, 100), eternal = True, z = 10)
 
@@ -74,6 +78,35 @@ class MainMenu(Entity):
         self.floating_islands_button = Button(text = "Floating Islands", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = 0.05, parent = self.maps_menu)
         self.deserted_sands_button = Button(text = "Deserted Sands", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = -0.07, parent = self.maps_menu)
         self.mountainous_valley_button = Button(text = "Mountainous Valley", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = -0.19, parent = self.maps_menu)
+
+        # Settings Menu
+        self.settings_title = Text("Settings", parent = self.settings_menu, y = 0.4, origin = (0,0), scale = 2)
+        self.keybind_buttons = {}
+        
+        y = 0.3
+        for action, key in keybindings.keybinds.items():
+            b = Button(
+                parent=self.settings_menu,
+                text=f"{action}: {key}",
+                scale_y=0.05,
+                scale_x=0.4,
+                y=y,
+                color = colourN, 
+                highlight_color = colourN
+            )
+            b.on_click = Func(self.change_key, action)
+            self.keybind_buttons[action] = b
+            y -= 0.06
+
+        self.back_button = Button(text = "Back", color = colourN, highlight_color = colourN, scale_y = 0.1, scale_x = 0.3, y = y, parent = self.settings_menu)
+    
+    def change_key(self, action):
+        if self.waiting_for_key:
+            return
+
+        self.waiting_for_key = True
+        self.action_to_change = action
+        self.keybind_buttons[action].text = f"{action}: Press any key..."
 
     def update(self):
         if self.player.health <= 0:
@@ -91,39 +124,66 @@ class MainMenu(Entity):
             self.enable_end_screen = True
             
     def input(self, key):
-        if key == "up arrow":
-            for menu in self.menus:
-                if menu.enabled:
-                    self.index -= 1
-                    if self.index <= -1:
-                        self.index = 0
-                    if isinstance(menu.children[self.index], Button):
-                        menu.children[self.index].color = colourH
-                        menu.children[self.index].highlight_color = colourH
-                        for button in menu.children:
-                            if menu.children[self.index] != button:
-                                button.color = colourN
-                                button.highlight_color = colourN
-                    else:
-                        self.index += 1
+        if self.waiting_for_key and key not in ["enter", "up arrow", "down arrow", "left mouse down", "right mouse down"]:
+            keybindings.set_key(self.action_to_change, key)
+            self.waiting_for_key = False
+            self.refresh_settings_menu()
+            return
 
-        elif key == "down arrow":
-            for menu in self.menus:
-                if menu.enabled:
-                    self.index += 1
-                    if self.index > len(menu.children) - 1:
-                        self.index = len(menu.children) - 1
-                    if isinstance(menu.children[self.index], Button):
-                        menu.children[self.index].color = colourH
-                        menu.children[self.index].highlight_color = colourH
-                        for button in menu.children:
-                            if menu.children[self.index] != button:
-                                button.color = colourN
-                                button.highlight_color = colourN
+        if self.settings_menu.enabled and not self.waiting_for_key:
+            if key == "up arrow":
+                self.index -= 1
+                if self.index < 0:
+                    self.index = len(self.settings_menu.children) - 1
+            elif key == "down arrow":
+                self.index += 1
+                if self.index >= len(self.settings_menu.children):
+                    self.index = 0
+            
+            for i, c in enumerate(self.settings_menu.children):
+                if isinstance(c, Button):
+                    if i == self.index:
+                        c.color = colourH
+                        c.highlight_color = colourH
                     else:
+                        c.color = colourN
+                        c.highlight_color = colourN
+        elif not self.settings_menu.enabled:
+            if key == "up arrow":
+                for menu in self.menus:
+                    if menu.enabled:
                         self.index -= 1
+                        if self.index <= -1:
+                            self.index = 0
+                        if isinstance(menu.children[self.index], Button):
+                            menu.children[self.index].color = colourH
+                            menu.children[self.index].highlight_color = colourH
+                            for button in menu.children:
+                                if menu.children[self.index] != button:
+                                    button.color = colourN
+                                    button.highlight_color = colourN
+                        else:
+                            self.index += 1
+
+            elif key == "down arrow":
+                for menu in self.menus:
+                    if menu.enabled:
+                        self.index += 1
+                        if self.index > len(menu.children) - 1:
+                            self.index = len(menu.children) - 1
+                        if isinstance(menu.children[self.index], Button):
+                            menu.children[self.index].color = colourH
+                            menu.children[self.index].highlight_color = colourH
+                            for button in menu.children:
+                                if menu.children[self.index] != button:
+                                    button.color = colourN
+                                    button.highlight_color = colourN
+                        else:
+                            self.index -= 1
 
         if key == "enter":
+            if self.waiting_for_key:
+                return
             # Main Menu
             if self.mainmenu.enabled:
                 if highlighted(self.start_button):
@@ -142,6 +202,11 @@ class MainMenu(Entity):
                 elif highlighted(self.retry_button):
                     self.player.reset()
                     self.pause_menu.disable()
+                elif highlighted(self.settings_button):
+                    self.settings_menu.enable()
+                    self.pause_menu.disable()
+                    self.update_menu(self.settings_menu)
+                    application.time_scale = 1
                 elif highlighted(self.mainmenu_button):
                     self.player.disable()
                     self.player.reset()
@@ -150,6 +215,19 @@ class MainMenu(Entity):
                     self.mainmenu.enable()
                     self.pause_menu.disable()
                     self.update_menu(self.pause_menu)
+
+            # Settings menu
+            elif self.settings_menu.enabled:
+                if highlighted(self.back_button):
+                    self.pause_menu.enable()
+                    self.settings_menu.disable()
+                    self.update_menu(self.pause_menu)
+                    application.time_scale = 0.1
+                else:
+                    for action, button in self.keybind_buttons.items():
+                        if highlighted(button):
+                            self.change_key(action)
+                            break
 
             # Maps menu
             elif self.maps_menu.enabled:
@@ -178,14 +256,16 @@ class MainMenu(Entity):
                 self.end_screen.disable()
                 self.enable_end_screen = True
                 self.player.reset()
-
         if key == "escape":
             if self.maps_menu.enabled:
                 self.maps_menu.disable()
                 self.mainmenu.enable()
-
+            elif self.settings_menu.enabled:
+                self.settings_menu.disable()
+                self.pause_menu.enable()
+                application.time_scale = 0.1
             # Pause Menu
-            if self.player.enabled:
+            elif self.player.enabled:
                 self.pause()
                 self.update_menu(self.pause_menu)
 
@@ -212,9 +292,20 @@ class MainMenu(Entity):
                 application.time_scale = 1
 
     def update_menu(self, menu):
-        for c in menu.children:
-            c.color = colourN
-            c.highlighted_color = colourN
-        menu.children[0].color = colourH
-        menu.children[0].highlighted_color = colourH
-        self.index = 0
+        for i, c in enumerate(menu.children):
+            if isinstance(c, Button):
+                c.color = colourN
+                c.highlight_color = colourN
+        
+        # Find the first button to highlight
+        for i, c in enumerate(menu.children):
+            if isinstance(c, Button):
+                c.color = colourH
+                c.highlight_color = colourH
+                self.index = i
+                break
+    
+    def refresh_settings_menu(self):
+        for action, button in self.keybind_buttons.items():
+            button.text = f"{action}: {keybindings.get_key(action)}"
+        self.update_menu(self.settings_menu)

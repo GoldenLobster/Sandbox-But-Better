@@ -209,18 +209,20 @@ class Bullet(Entity):
             self.is_player = False
 
         if self.is_player:
-            if mouse.hovered_entity:
-                if mouse.hovered_entity != self.gun.player.map:
-                    self.hovered_point = mouse.hovered_entity
-                    self.animate("position", Vec3(self.hovered_point.world_position) + (self.forward * 10000) + self.randomness, distance(self.hovered_point.world_position + (self.forward * 10000), self.gun.player) / 150, curve = curve.linear)
-                else:
-                    self.hovered_point = mouse.world_point
-                    self.animate("position", Vec3(self.hovered_point) + self.randomness + (self.forward * 10000), distance(self.hovered_point + (self.forward * 10000), self.gun.player) / 150, curve = curve.linear)
-                
+            # Raycast from camera to get target point
+            hit_info = raycast(camera.world_position, camera.forward, distance=inf, ignore=[self.gun.player, self])
+            if hit_info.hit:
+                self.hovered_point = hit_info.world_point
+                self.no_point = False
             else:
-                self.animate("position", self.world_position + (self.forward * 10000) + self.randomness, 5, curve = curve.linear)
+                # If the raycast doesn't hit anything, project a point far away
+                self.hovered_point = camera.world_position + camera.forward * 10000
                 self.no_point = True
-        
+
+            # Make the bullet look at the target point
+            self.look_at(self.hovered_point)
+            self.animate("position", self.position + self.forward * 10000, duration=5, curve=curve.linear)
+
             destroy(self, 2)
 
     def _handle_hit(self, target_entity):
@@ -330,7 +332,6 @@ class Rocket(Entity):
         self.gun.ready = True
 
     def fire(self):
-        destroy(self, 5)
         self.fired = True
         self.parent = scene
         self.gun.ready = False

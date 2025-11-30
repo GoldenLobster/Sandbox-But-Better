@@ -4,7 +4,8 @@ from ursina import curve
 class Particles(Entity):
     def __init__(self, position, direction = Vec3(random.random(), random.random(), random.random()), spray_amount = 30, **kwargs):
         super().__init__(
-            model = "particle.obj",
+            # Use the cached BAM by referring to the model without extension
+            model = "particle",
             texture = "particle.png",
             scale = 0.2,
             position = position, 

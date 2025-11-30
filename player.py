@@ -6,13 +6,14 @@ from ursina.prefabs.health_bar import HealthBar
 from guns import *
 from abilities import *
 
+from keybindings import keybindings
 import json
 
 sign = lambda x: -1 if x < 0 else (1 if x > 0 else 0)
 y_dir = lambda y: -1 if y < 0 else(1 if y > 0 else -1)
 
 class Player(Entity):
-    def __init__(self, position, speed = 5, jump_height = 14):
+    def __init__(self, position, speed = 5, jump_height = 28):
         super().__init__(
             model = "cube", 
             position = position,
@@ -24,12 +25,14 @@ class Player(Entity):
         # Camera
         mouse.locked = True
         camera.parent = self
-        camera.position = (0, 2, 0)
+        self.stand_eye_height = 5
+        self.slide_eye_height = 1.2
+        camera.position = (0, self.stand_eye_height, 0)
         camera.rotation = (0, 0, 0)
         camera.fov = 100
 
         # Crosshair
-        self.crosshair = Entity(model = "quad", color = color.black, parent = camera, rotation_z = 45, position = (0, 0, 1), scale = 1, z = 100, always_on_top = True)
+        self.crosshair = Entity(model = "quad", color = color.black, parent = camera, rotation_z = 45, position = (1, -1, 1), scale = 1, z = 100, always_on_top = True)
 
         # Player values
         self.speed = speed
@@ -144,7 +147,7 @@ class Player(Entity):
             if y_dir(self.velocity_y) == -1:
                 if y_ray.world_normal.y > 0.7 and y_ray.world_point.y - self.world_y < 0.5:
                     # Set the y value to the ground's y value
-                    if not held_keys["space"]:
+                    if not held_keys[keybindings.get_key("jump")]:
                         self.y = y_ray.world_point.y + 1.4
                     self.jump_count = 0
                     self.jumping = False
@@ -158,7 +161,7 @@ class Player(Entity):
 
         # Sliding
         if self.sliding:
-            camera.y = 0
+            camera.y = self.slide_eye_height
             if y_ray.distance <= 2:
                 slide_ray = raycast(self.world_position + self.forward, self.forward, distance = 8, traverse_target = self.map, ignore = [self, ])
                 if not slide_ray.hit:
@@ -180,25 +183,25 @@ class Player(Entity):
                     self.slide_pivot.rotation = camera.world_rotation
                     self.set_slide_rotation = False
         else:
-            camera.y = 2
+            camera.y = self.stand_eye_height
 
         # Velocity / Momentum
         if not self.sliding:
             movement = 10 if y_ray.distance < 5 and not self.rope.can_rope else 5
 
-            if held_keys["w"]:
+            if held_keys[keybindings.get_key("forward")]:
                 self.velocity_z += movement * time.dt
             else:
                 self.velocity_z = lerp(self.velocity_z, 0 if y_ray.distance < 5 else 1, time.dt * 3)
-            if held_keys["a"]:
+            if held_keys[keybindings.get_key("left")]:
                 self.velocity_x += movement * time.dt
             else:
                 self.velocity_x = lerp(self.velocity_x, 0 if y_ray.distance < 5 else 1, time.dt * 3)
-            if held_keys["s"]:
+            if held_keys[keybindings.get_key("back")]:
                 self.velocity_z -= movement * time.dt
             else:
                 self.velocity_z = lerp(self.velocity_z, 0 if y_ray.distance < 5 else 1, time.dt * 3)
-            if held_keys["d"]:
+            if held_keys[keybindings.get_key("right")]:
                 self.velocity_x -= movement * time.dt
             else:
                 self.velocity_x = lerp(self.velocity_x, 0 if y_ray.distance < 5 else -1, time.dt * 3)
@@ -219,15 +222,15 @@ class Player(Entity):
             air_movementX = 0.5 if self.movementX < 0.5 and self.movementX > -0.5 else 0.2
             air_movementZ = 0.5 if self.movementZ < 0.5 and self.movementZ > -0.5 else 0.2
 
-            self.movementX += (self.forward[0] * held_keys["w"] * air_movementX + 
-                self.left[0] * held_keys["a"] * air_movementX + 
-                self.back[0] * held_keys["s"] * air_movementX + 
-                self.right[0] * held_keys["d"] * air_movementX) / 2 * time.dt
+            self.movementX += (self.forward[0] * held_keys[keybindings.get_key("forward")] * air_movementX + 
+                self.left[0] * held_keys[keybindings.get_key("left")] * air_movementX + 
+                self.back[0] * held_keys[keybindings.get_key("back")] * air_movementX + 
+                self.right[0] * held_keys[keybindings.get_key("right")] * air_movementX) / 2 * time.dt
 
-            self.movementZ += (self.forward[2] * held_keys["w"] * air_movementZ + 
-                self.left[2] * held_keys["a"] * air_movementZ + 
-                self.back[2] * held_keys["s"] * air_movementZ + 
-                self.right[2] * held_keys["d"] * air_movementZ) / 2 * time.dt
+            self.movementZ += (self.forward[2] * held_keys[keybindings.get_key("forward")] * air_movementZ + 
+                self.left[2] * held_keys[keybindings.get_key("left")] * air_movementZ + 
+                self.back[2] * held_keys[keybindings.get_key("back")] * air_movementZ + 
+                self.right[2] * held_keys[keybindings.get_key("right")] * air_movementZ) / 2 * time.dt
 
         # Collision Detection
         if self.movementX != 0:
@@ -275,43 +278,43 @@ class Player(Entity):
             self.healthbar.value = self.health
 
     def input(self, key):
-        if key == "space":
+        if key == keybindings.get_key("jump"):
             if self.jump_count < 1:
                 self.jump()
         
-        if key == "left shift":
+        if key == keybindings.get_key("slide"):
             self.sliding = False # turned sliding off for now
             self.set_slide_rotation = True
-        elif key == "left shift up":
+        elif key == f'{keybindings.get_key("slide")} up':
             self.sliding = False
 
-        if key == "1":
+        if key == keybindings.get_key("gun_1"):
             if not self.rifle.enabled:
                 for gun in self.guns:
                     gun.disable()
                 self.rifle.enable()
-        elif key == "2":
+        elif key == keybindings.get_key("gun_2"):
             if not self.shotgun.enabled:
                 for gun in self.guns:
                     gun.disable()
                 self.shotgun.enable()
-        elif key == "3":
+        elif key == keybindings.get_key("gun_3"):
             if not self.pistol.enabled:
                 for gun in self.guns:
                     gun.disable()
                 self.pistol.enable()
-        elif key == "4":
+        elif key == keybindings.get_key("gun_4"):
             if not self.minigun.enabled:
                 for gun in self.guns:
                     gun.disable()
                 self.minigun.enable()
-        elif key == "5":
+        elif key == keybindings.get_key("gun_5"):
             if not self.rocket_launcher.enabled:
                 for gun in self.guns:
                     gun.disable()
                 self.rocket_launcher.enable()
 
-        if key == "scroll up":
+        if key == keybindings.get_key("next_gun"):
             self.current_gun = (self.current_gun - 1) % len(self.guns)
             for i, gun in enumerate(self.guns):
                 if i == self.current_gun:
@@ -319,7 +322,7 @@ class Player(Entity):
                 else:
                     gun.disable()
         
-        if key == "scroll down":
+        if key == keybindings.get_key("prev_gun"):
             self.current_gun = (self.current_gun + 1) % len(self.guns)
             for i, gun in enumerate(self.guns):
                 if i == self.current_gun:
