@@ -1,38 +1,27 @@
-# Sandbox
-A Simple 3D Fast Paced FPS made in Python using the Ursina Engine (wip)
+This is basically the same game that mandaw created, just with some extra sauce
 
-# How To Play
+## Features added:
 
-Make sure you have python and ursina installed
+- multiplayer(still a bit of a work in progress, it works, sometimes)
+- settings menu(change keybinds)
+- jump height changed
+- various bug fixes(cross platform did not work, obj files didnt work, constant crashes etc..)
+- a small map change(more to come)
+- death animation added
+- moved crosshair to make up for the inacuracy of the bullet shooting
 
-https://www.python.org/
 
-```
-pip install https://github.com/pokepetter/ursina/archive/master.zip
-```
+## stuff i wanna do
 
-1. Click Code, then click download zip
-2. Extract the zip, and navigate to the folder in CMD or Terminal
-3. Type
-```
-python main.py
-```
-4. And there you go :)
+theres this bug, everytime i open the game it makes a big sound, it kinda sounds like all the sound assets playing all at once. i wanna fix this
 
-# Controls
+i wanna add more maps, better maps
 
-**Movement** - *WASD*
+good multiplayer(mine is still a work in progress)
 
-**Navigation through the menus** - *Up arrow/Left arrow/Enter*
+more animations(reload, aiming etc)
 
-**Rope** - *Right Click*
+probably more stuff will come to mind but idk
 
-**Shoot** - *Left Click*
-
-**Dashing/Slow Motion** - *Double-tap Shift*
-
-**Respawn/Reset** - *G*
-
-**Change Weapon** - *Numbers/Scroll Wheel*
 
 ![Screenshot 2022-09-17 at 20 45 58](https://user-images.githubusercontent.com/77012627/190874048-cac65b22-df04-4d05-b06f-1f60eebffe93.png)
