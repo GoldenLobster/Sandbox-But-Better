@@ -4,7 +4,7 @@ from player import Player
 
 from mainmenu import MainMenu
 
-from maps import FloatingIslands, DesertedSands, MountainousValley
+from maps import FloatingIslands, DesertedSands, MountainousValley, ScaledMap, LooseSands
 
 from scene_lighting import SceneLighting
 from multiplayer import MultiplayerManager
@@ -118,10 +118,16 @@ def load_assets():
     models_to_load = [
         "floatingislands", "desertedsands", "mountainous_valley", "jumppad", "particle", "particles", "enemy", "bigenemy", "pistol",
         "shotgun", "rifle", "minigun", "minigun-barrel", "rocket-launcher", "rocket", "bullet", "Male_Casual",
+        "map-scaled",
+        "loose-sands", # Add the new map model
     ]
 
     textures_to_load = [
         "level", "particle", "destroyed", "jetpack", "sky", "rope", "hit"
+    ]
+
+    sounds_to_load = [
+        "fall", "rope", "dash", "pistol", "destroyed", "shotgun", "rifle", "minigun", "rocket_launcher"
     ]
 
     for i, m in enumerate(models_to_load):
@@ -129,6 +135,10 @@ def load_assets():
 
     for i, t in enumerate(textures_to_load):
         load_texture(t)
+
+    for i, s in enumerate(sounds_to_load):
+        # Pre-load sounds by creating Audio objects
+        Audio(s, autoplay=False)
 
 # Load all assets on the main thread; Panda3D's loader isn't thread-safe
 load_assets()
@@ -139,9 +149,11 @@ player.disable()
 floating_islands = FloatingIslands(player, enabled = True)
 deserted_sands = DesertedSands(player, enabled = False)
 mountainous_valley = MountainousValley(player, enabled = False)
+scaled_map = ScaledMap(player, enabled = False)
+loose_sands = LooseSands(player, enabled = False)
 
 player.map = floating_islands
-player.maps = [floating_islands, deserted_sands, mountainous_valley]
+player.maps = [floating_islands, deserted_sands, mountainous_valley, scaled_map, loose_sands]
 
 multiplayer = MultiplayerManager(player)
 
@@ -149,8 +161,8 @@ if mp_choice["mode"] == "host":
     multiplayer.host_game(mp_choice["username"])
 elif mp_choice["mode"] == "join":
     multiplayer.connect(mp_choice["addr"], mp_choice["username"])
-
-mainmenu = MainMenu(player, floating_islands, deserted_sands, mountainous_valley)
+ 
+mainmenu = MainMenu(player, floating_islands, deserted_sands, mountainous_valley, scaled_map, loose_sands)
 
 # Lighting + Shadows
 scene_lighting = SceneLighting(ursina = app, player = player, sun_direction = (-0.7, -0.9, 0.5), shadow_resolution = 4096, sky_texture = "sky")

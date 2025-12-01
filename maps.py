@@ -81,3 +81,23 @@ class JumpPad(Entity):
             self.visible = True
         elif not self.level.enabled:
             self.visible = False
+
+class ScaledMap(Entity):
+    def __init__(self, player, **kwargs):
+        super().__init__(
+            model = "map-scaled.obj",
+            texture = "level.png",
+            collider = "mesh",
+            **kwargs
+        )
+        self.player = player
+
+class LooseSands(Entity):
+    def __init__(self, player, **kwargs):
+        super().__init__(
+            model = "loose-sands.obj",
+            texture = "level.png",
+            collider = "mesh",
+            **kwargs
+        )
+        self.player = player

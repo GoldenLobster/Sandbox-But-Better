@@ -342,6 +342,8 @@ class Player(Entity):
             self.position = (-60, 15, -16)
         elif self.map == self.maps[2]:
             self.position = (-5, 200, -10)
+        elif self.map == self.maps[3] or self.map == self.maps[4]:
+            self.position = (0, 10, 0)
         self.rotation = (0, -270, 0)
         self.velocity_x = 0
         self.velocity_y = 0

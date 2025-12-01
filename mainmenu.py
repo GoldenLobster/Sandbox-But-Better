@@ -7,7 +7,7 @@ colourN = color.rgba(0, 0, 0, 0.7)
 highlighted = lambda button: button.color == colourH
 
 class MainMenu(Entity):
-    def __init__(self, player, floating_islands, deserted_sands, mountainous_valley):
+    def __init__(self, player, floating_islands, deserted_sands, mountainous_valley, scaled_map, loose_sands):
         super().__init__(
             parent = camera.ui
         )
@@ -19,6 +19,8 @@ class MainMenu(Entity):
         self.floating_islands = floating_islands
         self.deserted_sands = deserted_sands
         self.mountainous_valley = mountainous_valley
+        self.scaled_map = scaled_map
+        self.loose_sands = loose_sands
 
         # Menus
         self.mainmenu = Entity(parent = self, enabled = False)
@@ -78,6 +80,8 @@ class MainMenu(Entity):
         self.floating_islands_button = Button(text = "Floating Islands", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = 0.05, parent = self.maps_menu)
         self.deserted_sands_button = Button(text = "Deserted Sands", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = -0.07, parent = self.maps_menu)
         self.mountainous_valley_button = Button(text = "Mountainous Valley", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = -0.19, parent = self.maps_menu)
+        self.scaled_map_button = Button(text = "Scaled Map", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = -0.31, parent = self.maps_menu)
+        self.loose_sands_button = Button(text = "Loose Sands", color = colourN, highlighted_color = colourH, scale_y = 0.1, scale_x = 0.3, y = -0.43, parent = self.maps_menu)
 
         # Settings Menu
         self.settings_title = Text("Settings", parent = self.settings_menu, y = 0.4, origin = (0,0), scale = 2)
@@ -149,38 +153,59 @@ class MainMenu(Entity):
                         c.color = colourN
                         c.highlight_color = colourN
         elif not self.settings_menu.enabled:
+            # Improved navigation for menus with mixed children (buttons and non-buttons)
             if key == "up arrow":
                 for menu in self.menus:
                     if menu.enabled:
-                        self.index -= 1
-                        if self.index <= -1:
-                            self.index = 0
-                        if isinstance(menu.children[self.index], Button):
-                            menu.children[self.index].color = colourH
-                            menu.children[self.index].highlight_color = colourH
-                            for button in menu.children:
-                                if menu.children[self.index] != button:
-                                    button.color = colourN
-                                    button.highlight_color = colourN
-                        else:
-                            self.index += 1
+                        buttons_in_menu = [c for c in menu.children if isinstance(c, Button)]
+                        if not buttons_in_menu:
+                            continue
 
+                        current_highlighted_index_in_buttons = -1
+                        for i, btn in enumerate(buttons_in_menu):
+                            if highlighted(btn):
+                                current_highlighted_index_in_buttons = i
+                                break
+
+                        if current_highlighted_index_in_buttons == -1:
+                            new_highlight_index_in_buttons = len(buttons_in_menu) - 1
+                        else:
+                            new_highlight_index_in_buttons = (current_highlighted_index_in_buttons - 1 + len(buttons_in_menu)) % len(buttons_in_menu)
+
+                        for i, btn in enumerate(buttons_in_menu):
+                            if i == new_highlight_index_in_buttons:
+                                btn.color = colourH
+                                btn.highlight_color = colourH
+                            else:
+                                btn.color = colourN
+                                btn.highlight_color = colourN
+                        self.index = menu.children.index(buttons_in_menu[new_highlight_index_in_buttons])
             elif key == "down arrow":
                 for menu in self.menus:
                     if menu.enabled:
-                        self.index += 1
-                        if self.index > len(menu.children) - 1:
-                            self.index = len(menu.children) - 1
-                        if isinstance(menu.children[self.index], Button):
-                            menu.children[self.index].color = colourH
-                            menu.children[self.index].highlight_color = colourH
-                            for button in menu.children:
-                                if menu.children[self.index] != button:
-                                    button.color = colourN
-                                    button.highlight_color = colourN
-                        else:
-                            self.index -= 1
+                        buttons_in_menu = [c for c in menu.children if isinstance(c, Button)]
+                        if not buttons_in_menu:
+                            continue
 
+                        current_highlighted_index_in_buttons = -1
+                        for i, btn in enumerate(buttons_in_menu):
+                            if highlighted(btn):
+                                current_highlighted_index_in_buttons = i
+                                break
+
+                        if current_highlighted_index_in_buttons == -1:
+                            new_highlight_index_in_buttons = 0
+                        else:
+                            new_highlight_index_in_buttons = (current_highlighted_index_in_buttons + 1) % len(buttons_in_menu)
+
+                        for i, btn in enumerate(buttons_in_menu):
+                            if i == new_highlight_index_in_buttons:
+                                btn.color = colourH
+                                btn.highlight_color = colourH
+                            else:
+                                btn.color = colourN
+                                btn.highlight_color = colourN
+                        self.index = menu.children.index(buttons_in_menu[new_highlight_index_in_buttons])
         if key == "enter":
             if self.waiting_for_key:
                 return
@@ -250,6 +275,20 @@ class MainMenu(Entity):
                     self.player.map = self.mountainous_valley
                     self.player.position = (-5, 200, -10)
                     self.start() 
+                if highlighted(self.scaled_map_button):
+                    for map in self.player.maps:
+                        map.disable()
+                    self.scaled_map.enable()
+                    self.player.map = self.scaled_map
+                    self.player.position = (0, 10, 0) # Placeholder spawn position for the new map
+                    self.start()
+                if highlighted(self.loose_sands_button):
+                    for map in self.player.maps:
+                        map.disable()
+                    self.loose_sands.enable()
+                    self.player.map = self.loose_sands
+                    self.player.position = (0, 10, 0) # Placeholder spawn position for the new map
+                    self.start()
 
             # End Screen
             if self.player.health <= 0:
