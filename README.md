@@ -2,7 +2,7 @@ This is basically the same game that mandaw created, just with some extra sauce
 
 ## Features added:
 
-- multiplayer(still a bit of a work in progress, it works, sometimes)
+- multiplayer(simple server as a subprocess, nothing crazy)
 - settings menu(change keybinds)
 - jump height changed
 - various bug fixes(cross platform did not work, obj files didnt work, constant crashes etc..)
@@ -15,11 +15,11 @@ This is basically the same game that mandaw created, just with some extra sauce
 
 theres this bug, everytime i open the game it makes a big sound, it kinda sounds like all the sound assets playing all at once. i wanna fix this
 
-i wanna add more maps, better maps
-
-good multiplayer(mine is still a work in progress)
+add more maps, better maps
 
 more animations(reload, aiming etc)
+
+game modes(TDM, CTF, FFA)
 
 probably more stuff will come to mind but idk
 
