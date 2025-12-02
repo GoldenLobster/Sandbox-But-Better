@@ -45,8 +45,8 @@ class Gun(Entity):
         self.equipped = equipped
 
         # Audio
-        self.gun_sound = Audio("pistol.wav", False)
-        self.destroyed_enemy = Audio("destroyed.wav", False)
+        self.gun_sound = Audio("pistol.wav", autoplay=False)
+        self.destroyed_enemy = Audio("destroyed.wav", autoplay=False)
         self.gun_sound.volume = 0.8
         self.destroyed_enemy.volume = 0.1
 

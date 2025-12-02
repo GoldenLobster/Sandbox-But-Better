@@ -121,7 +121,7 @@ class Player(Entity):
                 self.highscore = 0
 
         # Audio
-        self.fall_sound = Audio("fall.wav", False)
+        self.fall_sound = Audio("fall.wav", autoplay=False)
 
     def jump(self):
         self.jumping = True
